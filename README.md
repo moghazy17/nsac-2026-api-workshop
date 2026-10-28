@@ -15,6 +15,8 @@ Click the badge → **File → Save a copy in Drive** → run cells with **Shift
 | Path | What |
 |---|---|
 | `notebook/NSAC_API_Workshop.ipynb` | The workshop notebook: NeoWs code-along, 3 API cards (EPIC, NeoWs, NASA POWER), USGS join |
+| `handouts/NSAC_API_Cards_and_Cheat_Sheet.pdf` | Printable: 3 API cards (EPIC, NeoWs, NASA POWER) + 1-page cheat sheet |
+| [`handouts/API_CARDS.md`](handouts/API_CARDS.md) · [`handouts/CHEAT_SHEET.md`](handouts/CHEAT_SHEET.md) | The same, readable on GitHub |
 | `data/*_backup.json` | Saved API responses. If the Wi-Fi or an API fails, upload these and the notebook falls back to them |
 | `build_notebook.py` | Regenerates the notebook |
 

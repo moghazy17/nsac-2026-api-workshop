@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NSAC 2026 · API Cards and Cheat Sheet</title>
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --ink: #14172A; --muted: #4A5068; --line: #DADDE6; --tint: #F2F3F7;
+    --red: #D9311A; --blue: #1F5FD1; --amber: #A86400; --green: #1B7F52;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--ink); background: #fff; font-size: 9.6pt; line-height: 1.38; }
+  .page { width: 210mm; height: 297mm; padding: 10mm 14mm 9mm; display: flex; flex-direction: column; gap: 3mm; page-break-after: always; overflow: hidden; }
+  .page:last-child { page-break-after: auto; }
+  header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 3mm; }
+  header .logos { display: flex; align-items: center; gap: 5mm; }
+  header img { height: 9mm; }
+  header .tag { font-size: 8.5pt; color: var(--muted); text-align: right; }
+  h1 { font-size: 19pt; margin: 0; line-height: 1.1; }
+  .level { font-size: 9pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .hero { display: grid; grid-template-columns: 1fr 50mm; gap: 6mm; align-items: center; }
+  .hero img { width: 50mm; height: 22mm; object-fit: cover; border-radius: 2.5mm; }
+  .need { font-size: 10.5pt; font-style: italic; color: var(--muted); margin: 1.5mm 0 0; }
+  h2 { font-size: 10.5pt; margin: 0 0 1mm; }
+  section { break-inside: avoid; }
+  code, pre, .mono { font-family: "Courier New", Courier, monospace; }
+  pre { margin: 0; background: var(--tint); border-radius: 2mm; padding: 2.2mm 3mm; font-size: 8.3pt; line-height: 1.38; white-space: pre-wrap; word-break: break-all; }
+  code { background: var(--tint); padding: 0 1mm; border-radius: 1mm; font-size: 8.8pt; white-space: nowrap; }
+  table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+  th, td { text-align: left; vertical-align: top; padding: 1mm 1.6mm; border-bottom: 1px solid var(--line); }
+  th { font-size: 8.5pt; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .box { border: 1px solid var(--line); border-radius: 2.5mm; padding: 2.2mm 3.5mm; }
+  .trap { background: #FFF4E0; border-radius: 2.5mm; padding: 2mm 3.5mm; }
+  .trap b { color: var(--amber); }
+  ul.check { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 6mm; }
+  ul.check li { padding-left: 6mm; position: relative; margin-bottom: .8mm; }
+  ul.check li::before { content: ""; position: absolute; left: 0; top: .6mm; width: 3.2mm; height: 3.2mm; border: 1.4px solid var(--ink); border-radius: .7mm; }
+  ul.plain { margin: 0; padding-left: 5mm; }
+  ul.plain li { margin-bottom: .6mm; }
+  .k-blue { color: var(--blue); } .k-amber { color: var(--amber); } .k-red { color: var(--red); } .k-green { color: var(--green); }
+  footer { margin-top: auto; border-top: 1px solid var(--line); padding-top: 2.5mm; font-size: 8.5pt; color: var(--muted); display: flex; justify-content: space-between; }
+  .code-num { font-family: "Courier New", monospace; font-weight: 700; font-size: 10pt; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ CARD A -->
+<div class="page">
+  <header>
+    <div class="logos"><img src="img/space_apps_cairo.png" alt="NASA Space Apps Cairo"><img src="img/ieee_yp.png" alt="IEEE YP Egypt"></div>
+    <div class="tag">API &amp; Data Integration workshop<br>API card A of 3</div>
+  </header>
+  <div class="hero">
+    <div>
+      <div class="level k-green">Easy · needs your free key</div>
+      <h1>EPIC: Earth from space on a date</h1>
+      <p class="need">“A school club wants an ‘Earth from space’ card for any date someone picks.”</p>
+    </div>
+    <img src="img/card_epic.jpg" alt="Earth from NASA EPIC">
+  </div>
+
+  <section>
+    <h2>1 · Test this URL in your browser first</h2>
+    <pre><span class="k-blue">https://api.nasa.gov/EPIC/api/natural/date/</span><span class="k-amber">2025-06-01</span><span class="k-red">?api_key=YOUR_KEY</span></pre>
+    <p style="margin:1.5mm 0 0">You get a <b>list</b> <code>[ ]</code> of photos taken that day (≈ 20). Docs: <code>epic.gsfc.nasa.gov/about/api</code></p>
+  </section>
+
+  <section>
+    <h2>2 · Keep only these fields (per photo)</h2>
+    <table>
+      <tr><th>Field</th><th>Path</th><th>Notes</th></tr>
+      <tr><td>Image name</td><td class="mono">photo["image"]</td><td>Not a link yet (see step 3)</td></tr>
+      <tr><td>Time taken</td><td class="mono">photo["date"]</td><td>UTC, text → convert to a date</td></tr>
+      <tr><td>Centre latitude</td><td class="mono">photo["centroid_coordinates"]["lat"]</td><td>Where the camera points</td></tr>
+      <tr><td>Centre longitude</td><td class="mono">photo["centroid_coordinates"]["lon"]</td><td>Cairo ≈ 31.2</td></tr>
+      <tr><td>Caption</td><td class="mono">photo["caption"]</td><td>Optional</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3 · Build the picture link from the date + image name</h2>
+    <pre>https://epic.gsfc.nasa.gov/archive/natural/<span class="k-amber">2025/06/01</span>/jpg/<span class="k-blue">epic_1b_20250601094815</span>.jpg</pre>
+  </section>
+
+  <section>
+    <h2>4 · The feature</h2>
+    <p style="margin:0">An “Earth on 1 June 2025” card: the photo centred nearest to Cairo, the time it was taken, and where it points. Notebook: <b>Part 2 · Card A</b>.</p>
+  </section>
+
+  <div class="trap"><b>Trap:</b> a date with no photos returns <b>200 OK with an empty list <code>[ ]</code></b>. No error, nothing to show. Check <code>if not photos:</code> and show a friendly message.</div>
+
+  <section class="box">
+    <h2>Done when</h2>
+    <ul class="check">
+      <li>Browser URL returns 200 OK</li>
+      <li>Code call returns 200 OK (your key)</li>
+      <li>Clean table: time, lat, lon, image</li>
+      <li>Saved: <code>epic_clean.csv</code> downloaded</li>
+      <li>Earth card on screen</li>
+      <li>Empty-date case handled with a message</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Stretch (fast pairs)</h2>
+    <ul class="plain">
+      <li>Show all of the day’s photos in a row: Earth turning in 24 hours.</li>
+      <li>Join a second source by <b>date + place</b>: NASA POWER max temperature for the point the camera faces (Card C).</li>
+    </ul>
+  </section>
+
+  <footer><span>NASA Space Apps Cairo 2026 · Bootcamp</span><span>github.com/moghazy17/nsac-2026-api-workshop</span></footer>
+</div>
+
+<!-- ============================================================ CARD B -->
+<div class="page">
+  <header>
+    <div class="logos"><img src="img/space_apps_cairo.png" alt="NASA Space Apps Cairo"><img src="img/ieee_yp.png" alt="IEEE YP Egypt"></div>
+    <div class="tag">API &amp; Data Integration workshop<br>API card B of 3</div>
+  </header>
+  <div class="hero">
+    <div>
+      <div class="level k-amber">Medium · needs your free key</div>
+      <h1>NeoWs: closest asteroids this week</h1>
+      <p class="need">“A science club wants a weekly post: which asteroids passed closest, how big, how fast?”</p>
+    </div>
+    <img src="img/card_neows.jpg" alt="Illustration of NASA's DART spacecraft and an asteroid">
+  </div>
+
+  <section>
+    <h2>1 · Test this URL in your browser first</h2>
+    <pre><span class="k-blue">https://api.nasa.gov/neo/rest/v1/feed</span><span class="k-amber">?start_date=2025-10-01&amp;end_date=2025-10-07</span><span class="k-red">&amp;api_key=YOUR_KEY</span></pre>
+    <p style="margin:1.5mm 0 0">You get <code>near_earth_objects</code>: one <b>list per date</b>. Merge the lists into one table. Docs: <code>api.nasa.gov</code> → Asteroids - NeoWs</p>
+  </section>
+
+  <section>
+    <h2>2 · Keep only these fields (per asteroid <code>a</code>)</h2>
+    <table>
+      <tr><th>Field</th><th>Path</th><th>Unit</th></tr>
+      <tr><td>Name</td><td class="mono">a["name"]</td><td>–</td></tr>
+      <tr><td>Size</td><td class="mono">a["estimated_diameter"]["meters"]["estimated_diameter_min" / "_max"]</td><td>m (use the average)</td></tr>
+      <tr><td>Speed</td><td class="mono">a["close_approach_data"][0]["relative_velocity"]["kilometers_per_second"]</td><td>km/s, <b>text</b></td></tr>
+      <tr><td>Miss distance</td><td class="mono">a["close_approach_data"][0]["miss_distance"]["kilometers"]</td><td>km, <b>text</b></td></tr>
+      <tr><td>Hazardous?</td><td class="mono">a["is_potentially_hazardous_asteroid"]</td><td>true / false</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3 · Your twist (pick one or more)</h2>
+    <ul class="plain">
+      <li>Another week (max 7 days!) · only the hazardous ones · the biggest instead of the closest · asteroids per day</li>
+      <li>Make distances human: <code>miss_distance_km / 384400</code> = “times the distance to the Moon”</li>
+    </ul>
+    <p style="margin:1mm 0 0">Notebook: <b>Part 1</b> (code-along) and <b>Part 2 · Card B</b>.</p>
+  </section>
+
+  <div class="trap"><b>Traps:</b> more than 7 days → <b>400</b>. Speeds and distances arrive as <b>text</b> (<code>"9" &gt; "10"</code> is true!) → convert with <code>pd.to_numeric</code>. NeoWs copies <b>your key</b> into every <code>links</code> URL, so remove it before you save or share the JSON.</div>
+
+  <section class="box">
+    <h2>Done when</h2>
+    <ul class="check">
+      <li>Browser URL returns 200 OK</li>
+      <li>Code call returns 200 OK (your key)</li>
+      <li>Clean table, numbers as numbers</li>
+      <li>Saved: <code>neows_clean.csv</code> downloaded</li>
+      <li>Your list printed on screen</li>
+      <li>Wrong key handled with a clear message</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Stretch (fast pairs): join a second source by date</h2>
+    <pre>https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&amp;starttime=2025-10-01&amp;endtime=2025-10-08&amp;minmagnitude=5</pre>
+    <p style="margin:1.5mm 0 0">No key needed. Time is in <b>milliseconds</b> since 1970 (UTC); coordinates are <b>[lon, lat, depth]</b>. Notebook: <b>Part 3</b>.</p>
+  </section>
+
+  <footer><span>NASA Space Apps Cairo 2026 · Bootcamp</span><span>github.com/moghazy17/nsac-2026-api-workshop</span></footer>
+</div>
+
+<!-- ============================================================ CARD C -->
+<div class="page">
+  <header>
+    <div class="logos"><img src="img/space_apps_cairo.png" alt="NASA Space Apps Cairo"><img src="img/ieee_yp.png" alt="IEEE YP Egypt"></div>
+    <div class="tag">API &amp; Data Integration workshop<br>API card C of 3</div>
+  </header>
+  <div class="hero">
+    <div>
+      <div class="level k-red">Harder · no key needed</div>
+      <h1>NASA POWER: chance of a very hot day</h1>
+      <p class="need">“We’re planning an outdoor event in Cairo. How likely is a day above 35 °C on that date?”</p>
+    </div>
+    <img src="img/card_power.jpg" alt="Cairo at night from the ISS">
+  </div>
+
+  <section>
+    <h2>1 · Test this URL in your browser first</h2>
+    <pre><span class="k-blue">https://power.larc.nasa.gov/api/temporal/daily/point</span><span class="k-amber">?parameters=T2M_MAX&amp;community=RE&amp;latitude=30.0444&amp;longitude=31.2357&amp;start=20050101&amp;end=20241231&amp;format=JSON</span></pre>
+    <p style="margin:1.5mm 0 0">20 years of daily maximum temperature for Cairo (≈ 7,300 days). Dates are <code>YYYYMMDD</code>. Docs: <code>power.larc.nasa.gov/docs</code></p>
+  </section>
+
+  <section>
+    <h2>2 · Keep only these fields</h2>
+    <table>
+      <tr><th>Field</th><th>Path</th><th>Notes</th></tr>
+      <tr><td>Daily values</td><td class="mono">data["properties"]["parameter"]["T2M_MAX"]</td><td>A dictionary: <code>{"20050101": 24.9, …}</code></td></tr>
+      <tr><td>Units</td><td class="mono">data["parameters"]["T2M_MAX"]["units"]</td><td>“C”: put it in your column name</td></tr>
+      <tr><td>Missing marker</td><td class="mono">data["header"]["fill_value"]</td><td>-999</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3 · Clean, then compute</h2>
+    <ul class="plain">
+      <li>Turn the dictionary into a table: one row per date, convert <code>"20050101"</code> to a real date.</li>
+      <li>Replace <b>-999</b> with “missing” and drop those rows. Count them first.</li>
+      <li>For a calendar day (e.g. 15 June), take every year ± 3 days → about 140 days. Chance = share of days above 35 °C.</li>
+      <li>Save a CSV whose first lines say the <b>units</b> and the <b>source link</b>.</li>
+    </ul>
+    <p style="margin:1mm 0 0">Notebook: <b>Part 2 · Card C</b>. Our result: 15 June in Cairo → <b>78%</b> chance of a day above 35 °C.</p>
+  </section>
+
+  <div class="trap"><b>Trap:</b> missing days are <b>-999</b>, not empty. Average them in and Cairo “gets colder”. The most recent days are always -999 (data arrives with a delay): ask for an end date a week back, or clean them.</div>
+
+  <section class="box">
+    <h2>Done when</h2>
+    <ul class="check">
+      <li>Browser URL returns 200 OK</li>
+      <li>Code call returns 200 OK</li>
+      <li>-999 rows counted and removed</li>
+      <li>Clean table with units in the name</li>
+      <li>Saved: <code>cairo_tmax_daily.csv</code> downloaded</li>
+      <li>A “% chance” answer on screen</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Stretch (fast pairs)</h2>
+    <ul class="plain">
+      <li>Add rain and wind in one call: <code>parameters=T2M_MAX,PRECTOTCORR,WS10M</code> (°C, mm/day, m/s) → chance of a wet or windy day.</li>
+      <li>Try another city: change <code>latitude</code> and <code>longitude</code> only.</li>
+    </ul>
+  </section>
+
+  <footer><span>NASA Space Apps Cairo 2026 · Bootcamp</span><span>github.com/moghazy17/nsac-2026-api-workshop</span></footer>
+</div>
+
+<!-- ============================================================ CHEAT SHEET -->
+<div class="page">
+  <header>
+    <div class="logos"><img src="img/space_apps_cairo.png" alt="NASA Space Apps Cairo"><img src="img/ieee_yp.png" alt="IEEE YP Egypt"></div>
+    <div class="tag">API &amp; Data Integration workshop<br>Cheat sheet</div>
+  </header>
+  <div>
+    <h1>API cheat sheet</h1>
+    <p class="need" style="font-style:normal">Need → find API → read docs → <b>test URL in browser</b> → code the call → inspect JSON → pick fields → clean → <b>save a backup</b> → build the feature → handle errors</p>
+  </div>
+
+  <div class="cols">
+    <section>
+      <h2>Status codes</h2>
+      <table>
+        <tr><td class="code-num k-green">200</td><td>It worked. Still check the list isn’t empty <code>[ ]</code></td></tr>
+        <tr><td class="code-num k-amber">400</td><td>A parameter is wrong (date format, range too long)</td></tr>
+        <tr><td class="code-num k-blue">401/404</td><td>Wrong address. api.nasa.gov answers 401 for a wrong endpoint</td></tr>
+        <tr><td class="code-num k-red">403</td><td>Key wrong or missing (all 40 characters?)</td></tr>
+        <tr><td class="code-num k-red">429</td><td>Too many calls. DEMO_KEY = 10/hour per Wi-Fi; your key = 10,000</td></tr>
+        <tr><td class="code-num">5xx</td><td>Their problem: retry later, use your saved copy</td></tr>
+      </table>
+    </section>
+    <section>
+      <h2>Reading JSON</h2>
+      <ul class="plain">
+        <li><code>{ }</code> dictionary → look up by <b>name</b>: <code>d["name"]</code></li>
+        <li><code>[ ]</code> list → look up by <b>position</b>: <code>lst[0]</code></li>
+        <li>Lost? <code>print(list(d.keys()))</code> and <code>len(lst)</code></li>
+        <li>Browser: Firefox shows JSON as a tree. Collapse all, open one box at a time, write the path down.</li>
+      </ul>
+      <h2 style="margin-top:3mm">Clean before you build</h2>
+      <ul class="plain">
+        <li>Text → number: <code>pd.to_numeric(col)</code></li>
+        <li>-999 → missing: <code>col.replace(-999, float("nan"))</code></li>
+        <li>Dates: <code>pd.to_datetime(col)</code>; times are usually UTC</li>
+        <li>Units in column names: <code>tmax_c</code>, <code>miss_km</code></li>
+        <li>GeoJSON order is <b>[lon, lat]</b>; USGS time is <b>ms</b></li>
+      </ul>
+    </section>
+  </div>
+
+  <section>
+    <h2>The fallback pattern: Python</h2>
+<pre>def fetch_or_backup(url, params, backup_path):
+    try:
+        r = requests.get(url, params=params, timeout=30)
+        r.raise_for_status()                          # 4xx/5xx → error
+        data = r.json()
+        with open(backup_path, "w") as f:             # save the moment it works
+            f.write(json.dumps(data).replace(API_KEY, "***"))   # never save your key
+        return data
+    except Exception as e:
+        print("⚠️ Live data unavailable:", e)          # a clear message
+        with open(backup_path) as f:                  # …then the saved copy
+            return json.load(f)</pre>
+  </section>
+
+  <section>
+    <h2>The same in JavaScript (fetch)</h2>
+<pre>try {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  localStorage.setItem("backup", JSON.stringify(data));
+  show(data);
+} catch (e) {
+  showMessage("Live data unavailable, showing saved data");
+  show(JSON.parse(localStorage.getItem("backup")));
+}</pre>
+  </section>
+
+  <div class="cols">
+    <section class="box">
+      <h2>Keys</h2>
+      <ul class="plain">
+        <li>Get your own: <b>api.nasa.gov</b> (1 minute)</li>
+        <li>Free NASA key in a web page: OK (worst case: quota used up)</li>
+        <li><b>Paid key (AI keys!): never</b> in a web page or public repo</li>
+        <li>Colab: 🔑 Secrets panel, not a code cell</li>
+      </ul>
+    </section>
+    <section class="box">
+      <h2>AI assistants</h2>
+      <ul class="plain">
+        <li>Great for: explaining docs, drafting parsing code</li>
+        <li>They invent endpoints and field names: check every field exists in the <b>real</b> response</li>
+        <li>Never paste a paid key into a prompt or shared code</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer><span>Docs: api.nasa.gov · power.larc.nasa.gov/docs · earthquake.usgs.gov</span><span>github.com/moghazy17/nsac-2026-api-workshop</span></footer>
+</div>
+
+</body>
+</html>

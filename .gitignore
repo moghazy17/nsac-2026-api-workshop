@@ -1,0 +1,5 @@
+# local-only
+notebook/*_with_outputs.ipynb
+slides/
+.env
+__pycache__/

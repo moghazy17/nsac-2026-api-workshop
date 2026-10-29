@@ -76,7 +76,7 @@ https://api.nasa.gov/neo/rest/v1/feed?start_date=2025-10-01&end_date=2025-10-07&
 - [ ] Browser URL returns 200 OK
 - [ ] Code call returns 200 OK (your key)
 - [ ] Clean table, numbers as numbers
-- [ ] `neows_clean.csv` saved and downloaded
+- [ ] `neows_my_week.csv` saved and downloaded
 - [ ] Your list printed on screen
 - [ ] Wrong key handled with a clear message
 
@@ -122,7 +122,7 @@ Notebook: *Part 2 · Card C*. Our result: 15 June in Cairo → **78%** chance of
 - [ ] Code call returns 200 OK
 - [ ] -999 rows counted and removed
 - [ ] Clean table with units in the name
-- [ ] `cairo_tmax_daily.csv` saved and downloaded
+- [ ] `city_tmax_daily.csv` saved and downloaded
 - [ ] A "% chance" answer on screen
 
 **Stretch:** `parameters=T2M_MAX,PRECTOTCORR,WS10M` (°C, mm/day, m/s) → chance of a wet or windy day · try another city (change `latitude`, `longitude`).

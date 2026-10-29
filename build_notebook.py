@@ -1,17 +1,38 @@
-"""Builds notebook/NSAC_API_Workshop.ipynb. Run: python build_notebook.py"""
+"""Builds notebook/NSAC_API_Workshop.ipynb. Run: python build_notebook.py
+
+Exercise templates mark each blank as ⟦answer⟧: the exercise cell shows ____ and the
+hidden solution cell shows the answer. The answers are also written to
+speaker/answers.json for the speaker's answer key.
+"""
 import json
+import re
 from pathlib import Path
 
 cells = []
+answers = []
+BLANK = re.compile(r"⟦(.*?)⟧")
 
 
 def md(src):
     cells.append({"cell_type": "markdown", "metadata": {}, "source": src.strip("\n")})
 
 
-def code(src):
-    cells.append({"cell_type": "code", "metadata": {}, "execution_count": None,
+def code(src, **metadata):
+    cells.append({"cell_type": "code", "metadata": metadata, "execution_count": None,
                   "outputs": [], "source": src.strip("\n")})
+
+
+def exercise(step, template, expect):
+    """An exercise cell with blanks, then its solution, hidden behind a Colab form title."""
+    code(BLANK.sub("____", template), tags=["exercise"])
+    code(f"#@title 🔑 Solution {step} (run it if you're stuck · double-click to see the code)\n"
+         + BLANK.sub(lambda m: m.group(1), template.strip("\n")),
+         cellView="form", tags=["solution"], step=step)
+    blanks = []
+    for line in template.splitlines():
+        hint = line.split("# ✏️", 1)[1].strip() if "# ✏️" in line else ""
+        blanks += [{"answer": m.group(1), "hint": hint} for m in BLANK.finditer(line)]
+    answers.append({"step": step, "blanks": blanks, "expect": expect})
 
 
 # ---------------------------------------------------------------- intro
@@ -331,63 +352,80 @@ md("""
 
 | Card | Level | Key? | Feature |
 |---|---|---|---|
-| 🌍 **A · EPIC** | easy | yes | *Earth from space* on a chosen date |
-| ☄️ **B · NeoWs** | medium | yes | your own twist on the asteroid list |
-| 🌡️ **C · NASA POWER** | harder | no | *chance of a very hot day* in Cairo on a date |
+| 🌍 **A · EPIC** | easy | yes | *Earth from space* on a date **you** pick |
+| ☄️ **B · NeoWs** | medium | yes | **your** week, **your** twist on the asteroid list |
+| 🌡️ **C · NASA POWER** | harder | no | chance of a very hot day in **your** city on **your** date |
 
 **Checkpoints:** 🕐 min 70: 200 OK · 🕑 min 85: clean table · 🕒 min 100: feature + saved file
+
+### How the exercises work
+- Fill every `____` in the cell, then run it. Your API card (PDF) and Part 1 have everything you need.
+- `NameError: name '____' is not defined` means a blank is still empty.
+- Each step checks itself and prints ✅ or ❌.
+- **Stuck?** Under every exercise there is a **🔑 Solution** cell. Run it to keep going, or double-click it to read the code. Try first: that's where the learning is!
 """)
 
 # --- card A
 md("""
 ---
-### 🌍 Card A · EPIC: *Earth from space on a chosen date*
+### 🌍 Card A · EPIC: *Earth from space on a date*
 EPIC is a camera on the DSCOVR satellite, 1.5 million km away. It photographs the whole sunlit Earth several times a day.
 
 - Docs: <https://epic.gsfc.nasa.gov/about/api>
 - Endpoint: `https://api.nasa.gov/EPIC/api/natural/date/YYYY-MM-DD?api_key=YOUR_KEY`
-- Fields to keep: `image`, `date`, `caption`, `centroid_coordinates` (lat/lon the camera is looking at)
 - ⚠️ Trap: a date with no photos returns **200 OK with an empty list `[]`**. No error, just nothing.
+
+**A1 · Make the call** for a date you choose (your birthday? photos exist from mid-2015 on).
 """)
 
-code('''
-EPIC_DATE = "2025-06-01"   # ✏️ try your birthday (photos exist from mid-2015 on)
+exercise("A1", '''
+EPIC_DATE = ⟦"2025-06-01"⟧          # ✏️ a date as "YYYY-MM-DD" (any date after mid-2015)
 
-photos = fetch_or_backup(f"https://api.nasa.gov/EPIC/api/natural/date/{EPIC_DATE}",
-                         {"api_key": API_KEY}, "epic_backup.json")
+photos = fetch_or_backup(
+    f"https://api.nasa.gov/EPIC/api/natural/date/{EPIC_DATE}",
+    {"api_key": ⟦API_KEY⟧},          # ✏️ the variable holding your key (Part 0)
+    "epic_backup.json",
+)
 if not photos:
     print(f"📭 No EPIC photos for {EPIC_DATE}. Try another date.")
 else:
-    print(f"{len(photos)} photos on {EPIC_DATE}")
-''')
-
-code('''
-epic = pd.DataFrame([{
-    "image": p["image"],
-    "time_utc": pd.to_datetime(p["date"]),
-    "center_lat": p["centroid_coordinates"]["lat"],
-    "center_lon": p["centroid_coordinates"]["lon"],
-} for p in photos])
-epic.head()
-''')
+    print(f"✅ {len(photos)} photos on {EPIC_DATE}")
+''', "✅ 22 photos on 2025-06-01 (other dates give other counts; 📭 = no photos that day)")
 
 md("""
-The JSON only gives the **image name**. The docs explain how to build the picture's address from the date + name:
-`https://epic.gsfc.nasa.gov/archive/natural/YYYY/MM/DD/jpg/<image>.jpg`
+**A2 · Keep only the fields you need.** Print `photos[0]` in a new cell to see the names.
+The lat/lon sit inside `centroid_coordinates`.
 """)
 
-code('''
+exercise("A2", '''
+epic = pd.DataFrame([{
+    "image": p[⟦"image"⟧],                                   # ✏️ the image name field
+    "time_utc": pd.to_datetime(p[⟦"date"⟧]),                 # ✏️ the field with the time
+    "center_lat": p["centroid_coordinates"][⟦"lat"⟧],        # ✏️ latitude key
+    "center_lon": p["centroid_coordinates"][⟦"lon"⟧],        # ✏️ longitude key
+} for p in photos])
+
+print("✅ table ready" if len(epic) and epic["center_lon"].notna().all() else "❌ check your field names")
+epic.head()
+''', "A table of 22 rows (one photo every ~65 min): image, time_utc, center_lat ≈ 20, center_lon stepping 154 → 138 → … → 23 → 7 → … → −173 → 171")
+
+md("""
+**A3 · The feature: an Earth card.** The JSON gives only the image *name*. The docs build the picture's address from the date + name:
+`https://epic.gsfc.nasa.gov/archive/natural/YYYY/MM/DD/jpg/<image>.jpg`.
+We show the photo centred nearest to *your* city.
+""")
+
+exercise("A3", '''
 from IPython.display import HTML, display
 
 
 def epic_image_url(image_name, day):
     y, m, d = day.split("-")
-    return f"https://epic.gsfc.nasa.gov/archive/natural/{y}/{m}/{d}/jpg/{image_name}.jpg"
+    return f"https://epic.gsfc.nasa.gov/archive/natural/{y}/{m}/{d}/jpg/{⟦image_name⟧}.jpg"   # ✏️ which variable goes here?
 
 
-# The feature: an "Earth from space" card, picking the photo centered nearest to Cairo
-CAIRO_LON = 31.2
-best = epic.loc[(epic["center_lon"] - CAIRO_LON).abs().idxmin()]
+MY_LON = ⟦31.2⟧          # ✏️ longitude of your city (Cairo ≈ 31.2, Alexandria ≈ 29.9)
+best = epic.loc[(epic["center_lon"] - MY_LON).abs().idxmin()]
 display(HTML(f"""
 <div style="font-family:sans-serif;max-width:420px;border:1px solid #ccc;border-radius:12px;padding:12px">
   <img src="{epic_image_url(best['image'], EPIC_DATE)}" style="width:100%;border-radius:8px">
@@ -396,7 +434,7 @@ display(HTML(f"""
   centred over lat {best['center_lat']:.1f}°, lon {best['center_lon']:.1f}°.</div>
   <small>Source: NASA EPIC / DSCOVR</small>
 </div>"""))
-''')
+''', "An Earth photo card; for Cairo on 2025-06-01: taken 09:43 UTC, centred over lon ≈ 23°")
 
 code('''
 epic.to_csv("epic_clean.csv", index=False)
@@ -411,78 +449,129 @@ md("""
 # --- card B
 md("""
 ---
-### ☄️ Card B · NeoWs: *your own twist*
-You already have the pipeline from Part 1. Make it yours (pick one or more):
-1. Change `START`/`END` to another week (max 7 days!) and re-run Part 1.
-2. Show **only hazardous** asteroids.
-3. Show the **biggest** asteroids instead of the closest.
-4. Count asteroids **per day** of the week.
+### ☄️ Card B · NeoWs: *your week, your twist*
+Same API as Part 1, but **you** write the pipeline. Look back at Part 1 when you need a path.
+
+**B1 · Call a different week** (max 7 days apart!).
 """)
 
-code('''
-# 2) only hazardous, closest first
-neo[neo["hazardous"]].head(5)
-''')
+exercise("B1", '''
+MY_START = ⟦"2025-10-08"⟧            # ✏️ first day "YYYY-MM-DD"
+MY_END = ⟦"2025-10-14"⟧              # ✏️ last day, at most 7 days later
 
-code('''
-# 3) the biggest ones
-neo.sort_values("diameter_m", ascending=False).head(5)[["name", "date", "diameter_m", "miss_distance_moons"]]
-''')
+my_feed = fetch_or_backup(
+    ⟦NEO_URL⟧,                       # ✏️ the feed endpoint variable from Part 1
+    {"start_date": MY_START, "end_date": MY_END, "api_key": API_KEY},
+    "neows_my_week.json",
+)
+print("✅ asteroids this week:", my_feed["element_count"])
+''', "✅ 200 OK · ✅ asteroids this week: 21 (for 2025-10-08 → 2025-10-14; other weeks give other counts)")
 
-code('''
-# 4) asteroids per day
-per_day = neo.groupby("date").size()
-per_day.index = per_day.index.strftime("%a %d %b")
+md("""
+**B2 · Flatten and clean.** Fill in the paths (Part 1, Step 4 has the table), then convert text to numbers.
+""")
+
+exercise("B2", '''
+def feed_to_table(feed):
+    rows = []
+    for day, asteroids in feed[⟦"near_earth_objects"⟧].items():          # ✏️ the key with one list per date
+        for a in asteroids:
+            if not a["close_approach_data"]:
+                continue
+            approach = a["close_approach_data"][0]
+            size = a["estimated_diameter"]["meters"]
+            rows.append({
+                "name": a["name"],
+                "date": day,
+                "diameter_m": (size["estimated_diameter_min"] + size["estimated_diameter_max"]) / 2,
+                "speed_km_s": approach["relative_velocity"][⟦"kilometers_per_second"⟧],   # ✏️ speed key
+                "miss_distance_km": approach["miss_distance"][⟦"kilometers"⟧],            # ✏️ distance key
+                "hazardous": a[⟦"is_potentially_hazardous_asteroid"⟧],                     # ✏️ the true/false flag
+            })
+    df = pd.DataFrame(rows)
+    for col in ["speed_km_s", "miss_distance_km"]:
+        df[col] = ⟦pd.to_numeric⟧(df[col])                                 # ✏️ the pandas function: text → number
+    df["date"] = pd.to_datetime(df["date"])
+    df["miss_distance_moons"] = df["miss_distance_km"] / 384_400
+    return df.sort_values("miss_distance_km").reset_index(drop=True)
+
+
+my_neo = feed_to_table(my_feed)
+print("✅ numbers are numbers" if my_neo["miss_distance_km"].dtype.kind == "f" else "❌ still text: convert it")
+my_neo.head()
+''', "✅ numbers are numbers · a table sorted by miss distance, with miss_distance_moons")
+
+md("""
+**B3 · Your twist.** Pick **one** line (or all three) and finish it.
+""")
+
+exercise("B3", '''
+hazardous_only = my_neo[my_neo[⟦"hazardous"⟧]]                                  # ✏️ the true/false column
+biggest_first = my_neo.sort_values(⟦"diameter_m"⟧, ascending=False)             # ✏️ the size column
+per_day = my_neo.groupby(⟦"date"⟧).size()                                       # ✏️ the column to group by
+
+print(f"☄️ {MY_START} → {MY_END}: {len(my_neo)} asteroids, {len(hazardous_only)} hazardous")
+print("Biggest:", biggest_first.iloc[0]["name"], f"(~{biggest_first.iloc[0]['diameter_m']:.0f} m)")
+print("Closest:", my_neo.iloc[0]["name"], f"({my_neo.iloc[0]['miss_distance_moons']:.1f} × Moon distance)")
 per_day
+''', "2025-10-08 → 14: 21 asteroids, 0 hazardous (hazardous_only is empty, which is fine) · Biggest: 504181 (2006 TC) ~744 m · Closest: (2025 US6) at 0.4 × Moon distance, closer than the Moon!")
+
+code('''
+my_neo.to_csv("neows_my_week.csv", index=False)
+download("neows_my_week.csv")
 ''')
 
 md("""
-✅ **Done when:** a new 200 OK call (new dates) · clean table · saved CSV · your feature printed.
-⭐ **Stretch:** Part 3 joins the asteroids with real earthquakes.
+✅ **Done when:** a new 200 OK call (your dates) · clean table · saved CSV · your twist printed.
+⭐ **Stretch:** Part 3 joins asteroids with real earthquakes.
 """)
 
 # --- card C
 md("""
 ---
 ### 🌡️ Card C · NASA POWER: *chance of a very hot day*
-**The fictional need:** *"We're planning an outdoor event in Cairo. How likely is a day above 35 °C on that date?"*
+**The fictional need:** *"We're planning an outdoor event. How likely is a day above X °C on that date?"*
 
 - Docs: <https://power.larc.nasa.gov/docs/services/api/temporal/daily/>
 - Endpoint: `https://power.larc.nasa.gov/api/temporal/daily/point`, **no key needed**
-- Parameters: `parameters=T2M_MAX` (max temperature at 2 m), `latitude`, `longitude`, `start`, `end` (`YYYYMMDD`), `community=RE`, `format=JSON`
-- ⚠️ Trap: missing days are **-999**, not empty. Average them in and Cairo gets a lot colder 🙃
+- ⚠️ Trap: missing days are **-999**, not empty. Average them in and your city gets a lot colder 🙃
+
+**C1 · Call 20 years of daily max temperature for your city.**
 """)
 
-code('''
-LAT, LON = 30.0444, 31.2357           # Cairo
+exercise("C1", '''
+LAT, LON = ⟦30.0444⟧, ⟦31.2357⟧          # ✏️ your city (Cairo 30.0444, 31.2357 · Alexandria 31.2001, 29.9187)
 POWER_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"
 power_params = {
-    "parameters": "T2M_MAX", "community": "RE", "format": "JSON",
+    "parameters": ⟦"T2M_MAX"⟧,          # ✏️ max temperature at 2 m (see the API card)
+    "community": "RE", "format": "JSON",
     "latitude": LAT, "longitude": LON,
-    "start": "20050101", "end": date.today().strftime("%Y%m%d"),   # ~20 years up to today
+    "start": "20050101", "end": date.today().strftime("%Y%m%d"),
 }
 power = fetch_or_backup(POWER_URL, power_params, "power_backup.json")
-print("Units:", power["parameters"]["T2M_MAX"])
-''')
-
-code('''
-values = power["properties"]["parameter"]["T2M_MAX"]          # {"20050101": 24.9, ...}
-weather = pd.DataFrame({"tmax_c": pd.Series(values)})
-weather.index = pd.to_datetime(weather.index, format="%Y%m%d")
-
-print("Days:", len(weather), "| days marked -999:", (weather["tmax_c"] == -999).sum())
-weather.tail(8)   # the most recent days are not processed yet → -999
-''')
-
-code('''
-weather["tmax_c"] = weather["tmax_c"].replace(-999, float("nan"))
-weather = weather.dropna()
-print("Clean days:", len(weather), "| coldest:", weather["tmax_c"].min(), "°C | hottest:", weather["tmax_c"].max(), "°C")
-''')
+print("Units:", power["parameters"]["T2M_MAX"]["units"])
+''', "✅ 200 OK (takes 10–20 s) · Units: C")
 
 md("""
-**The feature.** For a calendar day, look at every year in the data, a few days either side
-(±3 days → ~140 samples instead of ~20), and count how often it went above the threshold.
+**C2 · Table + clean.** Dates come as `"20050101"` (year, month, day). Missing days are `-999`.
+""")
+
+exercise("C2", '''
+values = power["properties"]["parameter"][⟦"T2M_MAX"⟧]                  # ✏️ the parameter you asked for
+weather = pd.DataFrame({"tmax_c": pd.Series(values)})
+weather.index = pd.to_datetime(weather.index, format=⟦"%Y%m%d"⟧)       # ✏️ date format of "20050101"
+
+print("Days:", len(weather), "| days marked -999:", (weather["tmax_c"] == -999).sum())
+weather["tmax_c"] = weather["tmax_c"].replace(⟦-999⟧, float("nan"))    # ✏️ the missing-value code
+weather = weather.dropna()
+
+print("✅ no -999 left" if weather["tmax_c"].min() > -100 else "❌ -999 still in the data")
+print("Coldest:", weather["tmax_c"].min(), "°C | hottest:", weather["tmax_c"].max(), "°C")
+''', "Days ≈ 7,970 · ~8 days marked -999 (the most recent ones; grows by 1 per day) · ✅ no -999 left · Cairo: coldest 11.3 °C, hottest 45.5 °C")
+
+md("""
+**C3 · The feature.** For a calendar day, look at every year, a few days either side
+(±3 days → ~140 samples instead of ~20), and count how often it went above your threshold.
 """)
 
 code('''
@@ -496,13 +585,16 @@ def chance_of_hot_day(df, month, day, threshold=35, window=3):
         days += list(pd.date_range(center - pd.Timedelta(days=window), center + pd.Timedelta(days=window)))
     sample = df.loc[df.index.intersection(days), "tmax_c"]
     return 100 * (sample > threshold).mean(), len(sample)
-
-
-MONTH, DAY, THRESHOLD = 6, 15, 35     # ✏️ change me
-pct, n = chance_of_hot_day(weather, MONTH, DAY, THRESHOLD)
-print(f"🌡️ Cairo, {pd.Timestamp(2000, MONTH, DAY):%d %B}: {pct:.0f}% chance of a day above {THRESHOLD} °C")
-print(f"   based on {n} days of NASA POWER data, {weather.index.year.min()}–{weather.index.year.max()}")
 ''')
+
+exercise("C3", '''
+MONTH, DAY = ⟦6⟧, ⟦15⟧        # ✏️ your event date (month, day)
+THRESHOLD = ⟦35⟧              # ✏️ what counts as "very hot" for you, in °C
+
+pct, n = chance_of_hot_day(weather, MONTH, DAY, THRESHOLD)
+print(f"🌡️ {pd.Timestamp(2000, MONTH, DAY):%d %B}: {pct:.0f}% chance of a day above {THRESHOLD} °C")
+print(f"   based on {n} days of NASA POWER data, {weather.index.year.min()}–{weather.index.year.max()}")
+''', "Cairo, 15 June, 35 °C → 78% (based on ~154 days, 2005–2026)")
 
 code('''
 # A tiny "climate calendar": the 15th of every month
@@ -516,11 +608,11 @@ pd.DataFrame(
 md("A CSV that someone else can trust carries its **units** and its **source**:")
 
 code('''
-with open("cairo_tmax_daily.csv", "w", encoding="utf-8") as f:
-    f.write(f"# Daily max temperature at 2 m (T2M_MAX), units: degrees C, location: Cairo {LAT},{LON}\\n")
+with open("city_tmax_daily.csv", "w", encoding="utf-8") as f:
+    f.write(f"# Daily max temperature at 2 m (T2M_MAX), units: degrees C, location: {LAT},{LON}\\n")
     f.write("# Source: NASA POWER daily API, https://power.larc.nasa.gov ; -999 (missing) rows removed\\n")
     weather.to_csv(f, index_label="date")
-download("cairo_tmax_daily.csv")
+download("city_tmax_daily.csv")
 ''')
 
 md("""
@@ -643,3 +735,8 @@ out = Path(__file__).parent / "notebook" / "NSAC_API_Workshop.ipynb"
 out.parent.mkdir(exist_ok=True)
 out.write_text(json.dumps(nb, indent=1, ensure_ascii=False), encoding="utf-8")
 print("wrote", out, len(cells), "cells")
+
+key = Path(__file__).parent / "speaker" / "answers.json"
+key.parent.mkdir(exist_ok=True)
+key.write_text(json.dumps(answers, indent=1, ensure_ascii=False), encoding="utf-8")
+print("wrote", key, len(answers), "exercises")

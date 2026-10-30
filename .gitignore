@@ -1,6 +1,8 @@
 # local-only
 notebook/*_with_outputs.ipynb
-slides/
+slides/*
+!slides/*.pdf
 .env
 __pycache__/
 speaker/
+fouad/2_speaker_solutions/

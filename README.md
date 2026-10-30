@@ -14,17 +14,21 @@ Click the badge → **File → Save a copy in Drive** → run cells with **Shift
 ## What's inside
 | Path | What |
 |---|---|
+| `slides/NSAC_API_Workshop_Slides.pdf` | The workshop slides |
 | `notebook/NSAC_API_Workshop.ipynb` | The workshop notebook: NeoWs code-along, 3 API cards (EPIC, NeoWs, NASA POWER), USGS join |
 | `handouts/NSAC_API_Cards_and_Cheat_Sheet.pdf` | Printable: 3 API cards (EPIC, NeoWs, NASA POWER) + 1-page cheat sheet |
 | [`handouts/API_CARDS.md`](handouts/API_CARDS.md) · [`handouts/CHEAT_SHEET.md`](handouts/CHEAT_SHEET.md) | The same, readable on GitHub |
+| [`handouts/LLM_CHEAT_SHEET.md`](handouts/LLM_CHEAT_SHEET.md) | Optional: adding a free AI provider with a fallback chain |
 | `data/*_backup.json` | Saved API responses. If the Wi-Fi or an API fails, upload these and the notebook falls back to them |
 | `build_notebook.py` | Regenerates the notebook |
+| [`fouad/`](fouad/) | Fouad Soliman's version: 9 starter notebooks (00–04 workshop, 05–08 optional LLM add-on), his deck and LLM cheat sheet |
 
 ## APIs used
 - [NASA NeoWs](https://api.nasa.gov): near-Earth asteroids (free key)
 - [NASA EPIC](https://epic.gsfc.nasa.gov/about/api): whole-Earth photos from DSCOVR (free key)
 - [NASA POWER](https://power.larc.nasa.gov/docs/): daily weather history for any point (no key)
 - [USGS Earthquakes](https://earthquake.usgs.gov/fdsnws/event/1/): worldwide earthquakes (no key)
+- [JPL Sentry](https://ssd-api.jpl.nasa.gov/doc/sentry.html): asteroids with a chance of hitting Earth, impact odds (no key; in the slides, not the notebook)
 
 ## If you remember only 5 things
 1. Test the API URL in your browser first.
